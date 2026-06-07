@@ -1,4 +1,5 @@
 from flask import Flask, request
+from google import genai
 import requests, os
 
 app = Flask(__name__)
@@ -7,16 +8,14 @@ INSTANCE = os.environ["INSTANCE_ID"]
 TOKEN = os.environ["TOKEN"]
 AI_KEY = os.environ["AI_KEY"]
 
+client = genai.Client(api_key=AI_KEY)
+
 def ask_gemini(text):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={AI_KEY}"
-    body = {
-        "system_instruction": {
-            "parts": [{"text": "Ты вежливый продавец-консультант. Помогаешь клиентам выбрать товар. Пиши кратко на русском языке."}]
-        },
-        "contents": [{"parts": [{"text": text}]}]
-    }
-    res = requests.post(url, json=body)
-    return res.json()["candidates"][0]["content"]["parts"][0]["text"]
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=text
+    )
+    return response.text
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
